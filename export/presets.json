@@ -1,0 +1,70 @@
+[
+  {
+    "name": "untitled",
+    "preset": {
+      "Size": {
+        "value": 60
+      },
+      "__sps": {
+        "Full_Mix~": {},
+        "HighCut~": {},
+        "HighMid~": {},
+        "LowCut~": {},
+        "preq_Level~": {},
+        "preq_Level~[1]": {},
+        "preq_LowCut~": {}
+      },
+      "apf_g": {
+        "value": 0.535
+      },
+      "diff_num": {
+        "value": 4
+      },
+      "fb1": {
+        "value": 0.1
+      },
+      "high_cut": {
+        "value": 8000
+      },
+      "himid_lev": {
+        "value": 0
+      },
+      "himidfq": {
+        "value": 0
+      },
+      "lfo1_bw": {
+        "value": 0.3
+      },
+      "lfo1_rate": {
+        "value": 0.3
+      },
+      "low_cut": {
+        "value": 20
+      },
+      "lowcut": {
+        "value": 0
+      },
+      "mix": {
+        "value": 58
+      },
+      "post_level": {
+        "value": 50
+      },
+      "pre_del": {
+        "value": 20
+      },
+      "preq_level": {
+        "value": 0
+      },
+      "r_Damp": {
+        "value": 0
+      },
+      "r_Feedback": {
+        "value": 50
+      },
+      "x_fb": {
+        "value": 0.1
+      }
+    }
+  }
+]
