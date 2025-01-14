@@ -370,8 +370,8 @@ void RNBOGReverbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     juce::ignoreUnused (midiMessages);
     auto bufferSize = buffer.getNumSamples();
  
-    rnboObject.prepareToProcess (getSampleRate(),
-                                 static_cast<size_t> (bufferSize));
+   /* rnboObject.prepareToProcess (getSampleRate(),
+                                 static_cast<size_t> (bufferSize)); */
  
     rnboObject.process (buffer.getArrayOfWritePointers(),
                         static_cast<RNBO::Index> (buffer.getNumChannels()),
