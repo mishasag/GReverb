@@ -28,8 +28,8 @@ namespace RNBO {
 
 	public:
 
-		virtual void scheduleClockEvent(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime delay) = 0;
-		virtual void scheduleClockEventWithValue(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime delay, ParameterValue value) = 0;
+		virtual void scheduleClockEvent(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime time) = 0;
+		virtual void scheduleClockEventWithValue(EventTarget* eventTarget, ClockId clockIndex, MillisecondTime time, ParameterValue value) = 0;
 
 		// remove all clock events from the scheduler, optionally executing the clocks
 		virtual void flushClockEvents(EventTarget* eventTarget, ClockId clockIndex, bool execute) = 0;

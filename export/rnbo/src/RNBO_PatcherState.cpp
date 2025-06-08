@@ -57,6 +57,10 @@ namespace RNBO {
 	: _value(std::move(dataRef))
 	{}
 
+    ValueHolder::ValueHolder(SerializedBuffer&& data)
+    : _value(std::move(data))
+    {}
+
 	ValueHolder::ValueHolder(const signal sig)
 	: _value(sig)
 	{}
@@ -82,6 +86,7 @@ namespace RNBO {
 	ValueHolder::operator DataRef&() { return mpark::get<DataRef>(_value); }
 	ValueHolder::operator MultiDataRef&() { return mpark::get<MultiDataRef>(_value); }
 	ValueHolder::operator const char*() const { return mpark::get<String>(_value).c_str(); }
+    ValueHolder::operator SerializedBuffer&() { return mpark::get<SerializedBuffer>(_value); }
 
 	ValueHolder::operator PatcherState&() {
 		if (!mpark::holds_alternative<StateMapPtr>(_value)) allocateSubState();
@@ -146,6 +151,7 @@ namespace RNBO {
 		constexpr ValueHolder::Type operator()(const MultiDataRef&) const { return ValueHolder::MULTIREF; }
 		constexpr ValueHolder::Type operator()(const signal&) const { return ValueHolder::SIGNAL; }
 		constexpr ValueHolder::Type operator()(const String&) const { return ValueHolder::STRING; }
+        constexpr ValueHolder::Type operator()(const SerializedBuffer&) const { return ValueHolder::BUFFER; }
 	};
 
 	ValueHolder::Type ValueHolder::getType() const
@@ -217,6 +223,11 @@ namespace RNBO {
 	{
 		_map.emplace(key, str);
 	}
+
+    void PatcherState::add(const char* key, SerializedBuffer& data)
+    {
+        _map.emplace(key, std::move(data));
+    }
 
 	float PatcherState::getFloat(const char* key)
 	{
@@ -308,6 +319,11 @@ namespace RNBO {
 	{
 		return _map[key];
 	}
+
+    SerializedBuffer& PatcherState::getBuffer(const char *key)
+    {
+        return _map[key];
+    }
 
 	bool PatcherState::containsValue(const char* key) const
 	{

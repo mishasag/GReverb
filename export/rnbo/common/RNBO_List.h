@@ -2,13 +2,17 @@
 #define _RNBO_LIST_H_
 
 #include "RNBO_Types.h"
-#include "RNBO_PlatformInterface.h"
+#include "RNBO_Platform.h"
 
-#ifdef RNBO_NOSTDLIB
+#ifdef RNBO_NOSTL
 #include "RNBO_UniquePtr.h"
 #else
 #include <memory>
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
+
+#ifndef RNBO_FIXEDLISTSIZE
+#define RNBO_FIXEDLISTSIZE 0
+#endif
 
 namespace RNBO {
 
@@ -23,17 +27,19 @@ namespace RNBO {
 	 * added, but memory is not freed when removing elements.
 	 *
 	 * @tparam type of object stored in the container
+	 *
+	 * @tparam stack allocate-able fixed length part of the list
 	 */
-	template<typename T> class listbase {
+	template<typename T, size_t FIXED = RNBO_FIXEDLISTSIZE> class listbase {
 	public:
 
 		/**
 		 * @brief Default constructor
 		 */
 		listbase()
-		: length(0)
+		: length(0, *this)
 		, _values(nullptr)
-		, _allocatedLength(0)
+		, _allocatedLength(FIXED)
 		{
 			allocate(length, false);
 		}
@@ -49,14 +55,37 @@ namespace RNBO {
 		 * @endcode
 		 */
 		template<typename... Ts> listbase(Ts ... args)
-		: length(sizeof...(args))
+		: length(sizeof...(args), *this)
 		, _values(nullptr)
-		, _allocatedLength(0)
+		, _allocatedLength(FIXED)
 		{
 			allocate(length, false);
 			T listValues[sizeof...(args)] = {static_cast<T>(args)...};
-			for (size_t i = 0; i < length; i++) {
+			size_t i = 0;
+			if (FIXED) {
+				for (; i < length && i < FIXED; i++) {
+					_stackValues[i] = listValues[i];
+				}
+			}
+			for (; i < length; i++) {
 				_values[i] = listValues[i];
+			}
+		}
+        
+		template<typename T1, size_t N1> listbase(const listbase<T1, N1>& l)
+		: length(l.length, *this)
+		, _values(nullptr)
+		, _allocatedLength(FIXED)
+		{
+			allocate(length, false);
+			size_t i = 0;
+			if (FIXED) {
+				for (; i < length; i++) {
+					_stackValues[i] = l[i];
+				}
+			}
+			for (; i < length; i++) {
+				_values[i] = l[i];
 			}
 		}
 
@@ -71,21 +100,28 @@ namespace RNBO {
 		 * @endcode
 		 */
 		listbase(const listbase &l)
-		: length(l.length)
+		: length(l.length, *this)
 		, _values(nullptr)
-		, _allocatedLength(0)
+		, _allocatedLength(FIXED)
 		{
 			allocate(length, false);
-			for (size_t i = 0; i < length; i++) {
-				_values[i] = l._values[i];
+			size_t i = 0;
+			if (FIXED) {
+				for (; i < length; i++) {
+					_stackValues[i] = l[i];
+				}
+			}
+			for (; i < length; i++) {
+				_values[i] = l[i];
 			}
 		}
 
 		/**
 		 * @brief Move constructor
+		 *
 		 */
 		listbase(listbase&& l)
-		: length(l.length)
+		: length(l.length, *this)
 		, _values(l._values)
 		, _allocatedLength(l._allocatedLength)
 		{
@@ -93,13 +129,14 @@ namespace RNBO {
 			l._values = nullptr;
 		}
 
+
 		/**
 		 * @brief Destructor
 		 */
 		~listbase()
 		{
 			if (_values) {
-				Platform::get()->free(_values);
+				Platform::free(_values);
 				_values = nullptr;
 			}
 		}
@@ -117,11 +154,16 @@ namespace RNBO {
 		 */
 		T& operator[](size_t i) {
 			if (i >= length) {
-				Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "list index out of range", false /*unused*/);
+				Platform::errorOrDefault(RuntimeError::OutOfRange, "list index out of range", false /*unused*/);
 				_dummy = static_cast<T>(0);
 				return _dummy;
 			}
-			return _values[i];
+			if (FIXED) {
+				if (i < FIXED) return _stackValues[i];
+				else return _values[i - FIXED];
+			}
+			else
+				return _values[i];
 		}
 
 		/**
@@ -135,9 +177,14 @@ namespace RNBO {
 		 */
 		T operator[](size_t i) const {
 			if (i >= length) {
-				return Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "list index out of range", 0);
+				return Platform::errorOrDefault(RuntimeError::OutOfRange, "list index out of range", 0);
 			}
-			return _values[i];
+			if (FIXED) {
+				if (i < FIXED) return _stackValues[i];
+				else return _values[i - FIXED];
+			}
+			else
+				return _values[i];
 		}
 
 		listbase* operator->() {
@@ -156,10 +203,33 @@ namespace RNBO {
 			if (&l != this) {
 				length = l.length;
 				allocate(length, false);
-				for (size_t i = 0; i < length; i++) {
-					_values[i] = l._values[i];
+				size_t i = 0;
+				if (FIXED) {
+					for (; i < length; i++) {
+						_stackValues[i] = l[i];
+					}
+				}
+				for (; i < length; i++) {
+					_values[i] = l[i];
 				}
 			}
+			return *this;
+		}
+
+		template<size_t N1> listbase<T>& operator=(const listbase<T, N1>& l)
+		{
+			length = l.length;
+			allocate(length, false);
+			size_t i = 0;
+			if (FIXED) {
+				for (; i < length; i++) {
+					_stackValues[i] = l[i];
+				}
+			}
+			for (; i < length; i++) {
+				_values[i] = l[i];
+			}
+			
 			return *this;
 		}
 
@@ -176,7 +246,8 @@ namespace RNBO {
 		 */
 		void push(T item) {
 			allocate(length + 1, true);
-			_values[length] = item;
+			if (FIXED && length < FIXED) _stackValues[length] = item;
+			else _values[length - FIXED] = item;
 			length++;
 		}
 
@@ -193,7 +264,9 @@ namespace RNBO {
 		T pop() {
 			T tmp = 0;
 			if (length > 0) {
-				tmp = _values[length - 1];
+				size_t lastIndex = length - 1;
+				if (FIXED && lastIndex < FIXED) tmp = _stackValues[lastIndex];
+				else tmp = _values[lastIndex - FIXED];
 				length--;
 			}
 			return tmp;
@@ -209,10 +282,21 @@ namespace RNBO {
 		 */
 		T shift() {
 			if (length == 0) {
-				return Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "cannot shift out of empty list", 0);
+				return Platform::errorOrDefault(RuntimeError::OutOfRange, "cannot shift out of empty list", 0);
 			}
-			T tmp = _values[0];
-			Platform::get()->memmove(_values, _values + 1, (length - 1) * sizeof(T));
+			T tmp;
+			if (FIXED) {
+				tmp = _stackValues[0];
+				Platform::memmove(_stackValues, _stackValues + 1, (FIXED - 1) * sizeof(T));
+				if (length > FIXED && _values) {
+					_stackValues[FIXED - 1] = _values[0];
+					Platform::memmove(_values, _values + 1, (length - FIXED - 1) * sizeof(T));
+				}
+			}
+			else {
+				tmp = _values[0];
+				Platform::memmove(_values, _values + 1, (length - 1) * sizeof(T));
+			}
 			length--;
 			return tmp;
 		}
@@ -251,8 +335,14 @@ namespace RNBO {
 			listbase tmp(*this);
 			tmp.allocate(tmp.length + item.length, true);
 			for (size_t i = 0; i < item.length; i++) {
-				tmp._values[tmp.length] = item[i];
-				tmp.length++;
+				if (FIXED) {
+					tmp.length++;
+					tmp[tmp.length - 1] = item[i];
+				}
+				else {
+					tmp._values[tmp.length] = item[i];
+					tmp.length++;
+				}
 			}
 
 			return tmp;
@@ -273,7 +363,12 @@ namespace RNBO {
 			allocate(end, true);
 			if (end > length) length = end;
 			for (size_t i = start; i < end; i++) {
-				_values[i] = value;
+				if (FIXED) {
+					(*this)[i] = value;
+				}
+				else {
+					_values[i] = value;
+				}
 			}
 
 			return *this;
@@ -292,7 +387,7 @@ namespace RNBO {
 		/**
 		 * @brief Modify part a list in place
 		 * 
-		 * @tparam Ts 
+		 * @tparam Ts necessary generate param pack
 		 * @param start the beginning index. If `start` is greater than the
 		 * length of the list, splice uses the length of the list.
 		 * @param deleteCount the number of elements to remove from the
@@ -317,7 +412,13 @@ namespace RNBO {
 			listbase<T> deletedItems;
 			deletedItems.allocate(deleteCount, false);
 			for (size_t i = 0; i < deleteCount; i++) {
-				deletedItems.push(_values[iStart + i]);
+				if (FIXED) {
+					T val = (*this)[iStart + i];
+					deletedItems.push(val);
+				}
+				else {
+					deletedItems.push(_values[iStart + i]);
+				}
 			}
 
 			long newLength = (long)(length) + diff;
@@ -330,18 +431,33 @@ namespace RNBO {
 
 			if (diff < 0) {
 				for (long i = (long)start - diff; i < (long)length; i++) {
-					_values[i + diff] = _values[i];
+					if (FIXED) {
+						(*this)[i + diff] = (*this)[i];
+					}
+					else {
+						_values[i + diff] = _values[i];
+					}
 				}
 			} else if (diff > 0) {
 				for (long i = (long)(length - 1); i >= (long)start; i--) {
-					_values[i + diff] = _values[i];
+					if (FIXED) {
+						(*this)[i + diff] = (*this)[i];
+					}
+					else {
+						_values[i + diff] = _values[i];
+					}
 				}
 			}
 
 			// since allocating an array of 0 length is invalid, we always allocate at least length 1
 			T addValues[(sizeof...(args)) + 1] = {static_cast<T>(args)...};
 			for (size_t i = 0; i < addLength; i++) {
-				_values[i + start] = addValues[i];
+				if (FIXED) {
+					(*this)[i + start] = addValues[i];
+				}
+				else {
+					_values[i + start] = addValues[i];
+				}
 			}
 
 			length = static_cast<size_t>(newLength);
@@ -385,8 +501,14 @@ namespace RNBO {
 			//allocate and copy
 			tmp.allocate(static_cast<size_t>(end - start), false);
 			for (int i = start; i < end; i++) {
-				tmp._values[tmp.length] = _values[i];
-				tmp.length++;
+				if (FIXED) {
+					tmp.length++;
+					tmp[tmp.length - 1] = (*this)[i];
+				}
+				else {
+					tmp._values[tmp.length] = _values[i];
+					tmp.length++;
+				}
 			}
 
 			return tmp;
@@ -406,7 +528,12 @@ namespace RNBO {
 			}
 
 			for (size_t i = size_t(fromIndex); i < length; i++) {
-				if (_values[i] == value) return true;
+				if (FIXED) {
+					if ((*this)[i] == value) return true;
+				}
+				else {
+					if (_values[i] == value) return true;
+				}
 			}
 
 			return false;
@@ -428,7 +555,12 @@ namespace RNBO {
 			}
 
 			for (size_t i = size_t(fromIndex); i < length; i++) {
-				if (_values[i] == value) return (int)i;
+				if (FIXED) {
+					if ((*this)[i] == value) return (int)i;
+				}
+				else {
+					if (_values[i] == value) return (int)i;
+				}
 			}
 
 			return -1;
@@ -443,10 +575,19 @@ namespace RNBO {
 			size_t len2 = length >> 1;
 
 			for (size_t i = 0; i < len2; ++i) {
-				T tmp = _values[i];
-				size_t target = length - i - 1;
-				_values[i] = _values[target];
-				_values[target] = tmp;
+				if (FIXED) {
+					T tmp = (*this)[i];
+					size_t target = length - i - 1;
+					(*this)[i] = (*this)[target];
+					(*this)[target] = tmp;
+
+				}
+				else {
+					T tmp = _values[i];
+					size_t target = length - i - 1;
+					_values[i] = _values[target];
+					_values[target] = tmp;
+				}
 			}
 
 			return *this;
@@ -461,10 +602,67 @@ namespace RNBO {
 			allocate(size, true);
 		}
 
+    protected:
+
+        class ListLengthWrapper {
+        public:
+            ListLengthWrapper(size_t l, listbase& owner)
+            : _length(l)
+            , _owner(owner)
+            {}
+
+            ListLengthWrapper(const ListLengthWrapper& l) = delete;
+            ListLengthWrapper(ListLengthWrapper& l) = delete;
+
+            operator size_t() const {
+                return _length;
+            }
+
+            ListLengthWrapper& operator=(size_t l) {
+                _length = l;
+                if (_length < 0) _length = 0;
+                _owner->checkLength();
+                return *this;
+            }
+
+            ListLengthWrapper& operator=(const ListLengthWrapper& l) {
+                _length = l._length;
+                _owner->checkLength();
+                return *this;
+            }
+
+            void operator++() {
+                _length = _length + 1;
+                _owner->checkLength();
+            }
+
+            void operator--() {
+                _length = _length - 1;
+                if (_length < 0) _length = 0;
+                _owner->checkLength();
+            }
+
+            void operator++(int) {
+                _length = _length + 1;
+                _owner->checkLength();
+            }
+
+            void operator--(int) {
+                _length = _length - 1;
+                if (_length < 0) _length = 0;
+                _owner->checkLength();
+            }
+
+        private:
+            size_t _length = 0;
+            listbase& _owner;
+        };
+
+    public:
 		/**
 		 * @brief the number of elements in the list
 		 */
-		size_t	length = 0;
+		ListLengthWrapper	length = 0;
 
 		/**
 		 * @brief get a pointer to the internal values, for memcopy etc
@@ -472,20 +670,27 @@ namespace RNBO {
 		T* inner() const { return _values; }
 
 	protected:
+
+        void checkLength() {
+            allocate(length, true);
+        }
+
 		void allocate(size_t size, bool keepValues)
 		{
 			if (size > _allocatedLength) {
 				T *old_values = _values;
 
-				_allocatedLength = listChunkSize + (size_t(size/listChunkSize)) * listChunkSize;
-				_values = (T*) Platform::get()->malloc(sizeof(T) * _allocatedLength);
+				auto sizeToAllocate = size - FIXED;
+				auto lengthToAllocate = listChunkSize + (size_t(sizeToAllocate/listChunkSize)) * listChunkSize;
+				_values = (T*) Platform::calloc(lengthToAllocate, sizeof(T));
+				_allocatedLength = FIXED + lengthToAllocate;
 
-				if (keepValues) {
-					Platform::get()->memcpy(_values, old_values, length * sizeof(T));
+				if (keepValues && old_values) {
+					Platform::memcpy(_values, old_values, (length - FIXED) * sizeof(T));
 				}
 
 				if (old_values) {
-					Platform::get()->free(old_values);
+					Platform::free(old_values);
 				}
 			}
 		}
@@ -494,6 +699,7 @@ namespace RNBO {
 		 * @brief the contents of the list
 		 */
 		T*	_values;
+		T	_stackValues[FIXED + 1];
 
 		/**
 		 * @brief how much memory has been allocated for the list
@@ -504,13 +710,16 @@ namespace RNBO {
 		 * @brief a dummy variable to accept out of bounds array assignments
 		 * rather than allow out of bounds memory acess
 		 */
-		T _dummy = static_cast<T>(0);
+		T _dummy = {};
 	};
 
 	using list = listbase<number>;
 	using indexlist = listbase<Index>;
 	using intlist = listbase<int>;
 
+    static list listWithSize(size_t n) { list l; l.length = n; return l; }
+    static list intlistWithSize(size_t n) { intlist l; l.length = n; return l; }
+    static list indexlistWithSize(size_t n) { indexlist l; l.length = n; return l; }
 
 	/**
 	 * @brief A simple container class to make it possible to have lists and
@@ -548,11 +757,11 @@ namespace RNBO {
 		list _val;
 	};
 
-#ifdef RNBO_NOSTDLIB
+#ifdef RNBO_NOSTL
 	using UniqueListPtr = UniquePtr<list>;
 #else
 	using UniqueListPtr = std::unique_ptr<listbase<number>>;
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
 
 } // namespace RNBO
 

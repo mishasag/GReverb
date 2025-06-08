@@ -117,6 +117,14 @@ namespace RNBO {
 		for (auto pi : _registeredParameterInterfaces) {
 			pi->deactivate();
 		}
+
+        for (auto ref = _externalDataRefMap.begin(); ref != _externalDataRefMap.end();) {
+            auto callback = ref->second->getCallback();
+            if (callback && ref->second->getData()) {
+                callback(ref->second->getMemoryId(), ref->second->getData());
+            }
+            ref = _externalDataRefMap.erase(ref);
+        }
 	}
 
 	bool Engine::setPatcher(UniquePtr<PatcherInterface> patcher) {
@@ -376,9 +384,7 @@ namespace RNBO {
 		ProcessLocker lock(this);
 
 		if (!lock.didLock()) {
-			RNBO_ASSERT(false);
-			// return an empty preset
-			PresetPtr preset = std::make_shared<Preset>();
+			PresetPtr preset = std::make_shared<DummyPreset>();
 			return preset;
 		}
 		else {

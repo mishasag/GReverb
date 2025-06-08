@@ -349,9 +349,8 @@ namespace RNBO {
 		return new MockCoreObject();
 	}
 
-	extern "C" PatcherFactoryFunctionPtr GetPatcherFactoryFunction(PlatformInterface* platformInterface)
+	extern "C" PatcherFactoryFunctionPtr GetPatcherFactoryFunction()
 	{
-		Platform::set(platformInterface);
 		return createmockcore;
 	}
 

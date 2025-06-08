@@ -242,6 +242,8 @@ namespace RNBO {
 			return 0;
 		}
 
+		MillisecondTime getPatcherTime() const override { return 0; }
+
 	private:
 		number	_sampleRate = 0;
 		Index 	_maxBlockSize = 0;

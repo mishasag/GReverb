@@ -310,8 +310,14 @@ namespace RNBO {
 		void notifyOutgoingEvents() {
 			for (auto pi : _activeParameterInterfaces) {
 				pi->pushDirtyParameters(_currentTime);
+                if (_presetTouched) {
+#ifndef RNBO_NOPRESETS
+                    pi->pushOutgoingEvent(PresetEvent(_currentTime, PresetEvent::Touched, nullptr, nullptr));
+#endif
+                }
 				pi->notifyOutgoingEvents();
 			}
+            _presetTouched = false;
 		}
 
 		MillisecondTime getCurrentTime() override { return _currentTime; }
@@ -633,7 +639,7 @@ namespace RNBO {
 		void presetTouched() override {
 #ifndef RNBO_NOPRESETS
 			if (!_settingPreset) {
-				sendOutgoingEvent(PresetEvent(_currentTime, PresetEvent::Touched, nullptr, nullptr));
+                _presetTouched = true;
 			}
 #endif // RNBO_NOPRESETS
 		}
@@ -644,6 +650,10 @@ namespace RNBO {
 		void setScheduleCallback(ScheduleCallback callback) override {
 			_scheduleCallback = callback;
 		}
+
+        bool hasCurrentEvent() const {
+            return _eventContext != nullptr;
+        }
 
 	protected:
 
@@ -690,11 +700,11 @@ namespace RNBO {
 		// only to be used from audio thread
 		bool							_inAudioProcess;
 
-#ifdef USE_STD_VECTOR
+#ifndef RNBO_NOSTL
 		std::vector<ParameterEventInterfaceImpl*>	_activeParameterInterfaces;
 #else
 		Vector<ParameterEventInterfaceImpl*>		_activeParameterInterfaces;
-#endif
+#endif // RNBO_NOSTL
 
 		PatcherChangedHandler*			_patcherChangedHandler = nullptr;
 		ParamNameHash					_paramNameHash;
@@ -761,6 +771,8 @@ namespace RNBO {
 		MidiEventList* 					_midiOutput = nullptr;
 
 		ScheduleCallback				_scheduleCallback = nullptr;
+
+        bool                            _presetTouched = false;
 	};
 
 } // namespace RNBO

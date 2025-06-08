@@ -73,6 +73,10 @@ namespace RNBO {
 		virtual Index getMaxBlockSize() const = 0;
 		virtual number getSampleRate() const = 0;
 		virtual bool hasFixedVectorSize() const = 0;
+		virtual MillisecondTime getPatcherTime() const = 0;
+
+	protected:
+
 		virtual void sendParameter(ParameterIndex, bool) {}
 
 		virtual ParameterValue getPolyParameterValue(PatcherInterface**, ParameterIndex index) {
@@ -100,7 +104,7 @@ namespace RNBO {
 
 } // namespace RNBO
 
-#ifndef RNBO_NOSTDLIB
+#ifndef RNBO_NOSTL
 
 ///@cond INTERNAL
 
@@ -119,7 +123,7 @@ namespace std
 
 ///@endcond INTERNAL
 
-#endif // RNBO_NOSTDLIB
+#endif // RNBO_NOSTL
 
 
 #endif // #ifndef _RNBO_PatcherInterface_H_

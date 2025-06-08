@@ -3,40 +3,40 @@
     "name": "untitled",
     "preset": {
       "Size": {
-        "value": 60
+        "value": 100
       },
       "__sps": {
         "Full_Mix~": {},
         "HighCut~": {},
         "HighMid~": {},
         "LowCut~": {},
+        "postq_Level~": {},
         "preq_Level~": {},
-        "preq_Level~[1]": {},
         "preq_LowCut~": {}
       },
       "apf_g": {
-        "value": 0.535
+        "value": 8
       },
-      "diff_num": {
-        "value": 4
-      },
-      "fb1": {
-        "value": 0.1
+      "bass_mult": {
+        "value": 1
       },
       "high_cut": {
         "value": 8000
       },
       "himid_lev": {
-        "value": 0
+        "value": 12
+      },
+      "himid_qf": {
+        "value": 0.5
       },
       "himidfq": {
-        "value": 0
+        "value": 1900
       },
       "lfo1_bw": {
-        "value": 0.3
+        "value": 0.9
       },
       "lfo1_rate": {
-        "value": 0.3
+        "value": 0.2
       },
       "low_cut": {
         "value": 20
@@ -45,13 +45,13 @@
         "value": 0
       },
       "mix": {
-        "value": 58
+        "value": 100
       },
       "post_level": {
-        "value": 50
+        "value": 0
       },
       "pre_del": {
-        "value": 20
+        "value": 49.800000000000004
       },
       "preq_level": {
         "value": 0
@@ -62,8 +62,11 @@
       "r_Feedback": {
         "value": 50
       },
-      "x_fb": {
-        "value": 0.1
+      "rt60_param": {
+        "value": 9.273431391855588
+      },
+      "xover": {
+        "value": 300
       }
     }
   }

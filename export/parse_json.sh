@@ -23,6 +23,7 @@ result=$(jq -r '.parameters[] |
     "                                             \(.initialValue | tonumber).0f,\n" +
     "                                             juce::String(),\n" +
     "                                             juce::AudioProcessorParameter::genericParameter,\n" +
+    "                                             percentFormat,\n" +
     "                                             nullptr));\n"
 ' "$json_file")
 echo "Generated C++ statement: $result"

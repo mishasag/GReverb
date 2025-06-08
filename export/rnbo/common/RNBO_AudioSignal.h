@@ -5,7 +5,6 @@
 
 #include "RNBO_Math.h"
 #include "RNBO_Types.h"
-#include "RNBO_PlatformInterface.h"
 
 namespace RNBO {
 
@@ -39,7 +38,7 @@ namespace RNBO {
 	{
 		// alloc and clear signals
 
-		Sample *newsig = static_cast<Sample*>(Platform::get()->realloc(sig, vs * sizeof(Sample)));
+		Sample *newsig = static_cast<Sample*>(Platform::realloc(sig, vs * sizeof(Sample)));
 		for (size_t i = oldSize; i < vs; i++) {
 			newsig[i] = 0;
 		}
@@ -49,7 +48,7 @@ namespace RNBO {
 
 	static inline void zeroSignal(SampleValue* sig, size_t size)
 	{
-		Platform::get()->memset(sig, 0, size * sizeof(SampleValue));
+		Platform::memset(sig, 0, size * sizeof(SampleValue));
 	}
 
 	static void fillSignal(SampleValue* sig, size_t size, SampleValue value, size_t offset = 0)
@@ -61,13 +60,13 @@ namespace RNBO {
 
 	static inline void copySignal(SampleValue *dst, const SampleValue * src, size_t size)
 	{
-		Platform::get()->memcpy(dst, src, size * sizeof(SampleValue));
+		Platform::memcpy(dst, src, size * sizeof(SampleValue));
 	}
 
 	static inline void *allocateArray(size_t count, const char *type)
 	{
 		RNBO_UNUSED(type);
-		return Platform::get()->malloc(count * sizeof(number));
+		return Platform::malloc(count * sizeof(number));
 	}
 
 	static inline bool isNaN(number v)
@@ -105,7 +104,7 @@ namespace RNBO {
 
 	static inline int stringCompare(const char *a, const char *b)
 	{
-		return Platform::get()->strcmp(a, b);
+		return Platform::strcmp(a, b);
 	}
 
 	static inline SampleValue rms(SampleValue *sig, SampleIndex n)
@@ -147,7 +146,7 @@ namespace RNBO {
 	}
 
 	static inline void crash() {
-		Platform::get()->abort();
+		Platform::abort();
 	}
 
 	static inline void crashifNaN(number v) {

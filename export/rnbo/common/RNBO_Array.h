@@ -51,7 +51,7 @@ namespace RNBO {
 
 		T& operator[](size_t n) {
 			if (n >= N) {
-				Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
+				Platform::errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
 				_dummy = {};
 				return _dummy;
 			}
@@ -59,7 +59,7 @@ namespace RNBO {
 		}
 		const T& operator[](size_t n) const {
 			if (n >= N) {
-				Platform::get()->errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
+				Platform::errorOrDefault(RuntimeError::OutOfRange, "array index out of range", false /*unused*/);
 				return _dummy;
 			}
 			return _values[n];

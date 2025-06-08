@@ -8,12 +8,13 @@ Dial::Dial (juce::RangedAudioParameter& param, juce::UndoManager* um)
     setWantsKeyboardFocus (true);
     setRepaintsOnMouseActivity (true);
     setColour (foregroundArcColourId, MyColours::blue);
-    setColour (backgroundArcColourId, MyColours::blackGrey);
+    setColour (backgroundArcColourId, MyColours::babyYellow);
+    //setColour (backgroundArcColourId, MyColours::blackGrey);
     setColour (needleColourId, MyColours::midGrey);
     setColour (borderColourId, MyColours::grey);
 
     setLabelColour (MyColours::grey);
-    label.setText (audioParam.getName (8), juce::NotificationType::dontSendNotification);
+    label.setText (audioParam.getName (11), juce::NotificationType::dontSendNotification);
     label.setJustificationType (juce::Justification::centred);
     label.setInterceptsMouseClicks (false, false);
 
