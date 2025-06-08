@@ -1,6 +1,12 @@
-build
+# .gitignore
+*.o
+*.out
+build/
+*.xcodeproj/
+*.xcworkspace/
 .DS_Store
-.cache
-.idea
-cmake-build-debug
-cmake-build-release
+Xcode/
+**/Builds
+**/JuceLibraryCode
+**/.DS_Store
+
