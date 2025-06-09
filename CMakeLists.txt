@@ -8,12 +8,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_OSX_ARCHITECTURES "arm64;x86_64" CACHE STRING "Build architectures for macOS")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.11" CACHE STRING "Minimum macOS version required")
 #set(JUCE_MACOS_ENABLE_CODE_SIGNING OFF CACHE BOOL "" FORCE)
-set(PLUGIN_VERSION "1.0.1")
+set(PLUGIN_VERSION "1.1")
 add_compile_definitions(PLUGIN_VERSION="${PLUGIN_VERSION}")
  
 project("${PROJECT_NAME}" VERSION 1.1 LANGUAGES C CXX)
  
-set(formats "VST3" "Standalone")
+set(formats "VST3" "LV2")
  
 if(APPLE)
     list(APPEND formats "AU")
@@ -32,7 +32,9 @@ juce_add_plugin("${PROJECT_NAME}"
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
-    PRODUCT_NAME "${PROJECT_NAME}")
+    PRODUCT_NAME "${PROJECT_NAME}"
+    BUNDLE_ID "com.starnge.audio.${PROJECT_NAME}"
+    LV2URI "https://github.com/mishasag/GReverb")
  
 juce_generate_juce_header("${PROJECT_NAME}")
  
